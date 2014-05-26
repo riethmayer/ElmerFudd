@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["andrzej.sliwa@i-tool.eu"]
   spec.summary       = %q{RabbitMQ in OTP way}
   spec.description   = %q{Be vewwy, vewwy quiet...I'm hunting wabbits!}
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/bonusboxme/ElmerFudd"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
