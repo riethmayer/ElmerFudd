@@ -1,3 +1,7 @@
+# Be vewwy, vewwy quiet...I'm hunting wabbits! [![Build Status](https://travis-ci.org/bonusboxme/ElmerFudd.svg)](https://travis-ci.org/bonusboxme/ElmerFudd)
+
+![Elmer Fudd](https://raw.githubusercontent.com/bonusboxme/ElmerFudd/master/elmer-fudd.jpg)
+
 # ElmerFudd
 
 TODO: Write a gem description
