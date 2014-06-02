@@ -209,6 +209,7 @@ module ElmerFudd
       rescue ActiveRecord::ConnectionTimeoutError
         retry_num += 1
         if retry_num <= 5
+          sleep 1
           retry
         else
           raise
@@ -242,7 +243,7 @@ module ElmerFudd
       rescue @exception => e
         if e.message =~ @exception_message_matches && retry_num < @times
           retry_num += 1
-          Math.log(retry_num, 2)
+          sleep Math.log(retry_num, 2)
           retry
         else
           raise
