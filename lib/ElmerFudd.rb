@@ -202,15 +202,17 @@ module ElmerFudd
     extend Filter
     def self.call(env, message, filters)
       retry_num = 0
-      ActiveRecord::Base.connection_pool.with_connection do
-        call_next(env, message, filters)
-      end
-    rescue ActiveRecord::ConnectionTimeoutError
-      retry_num += 1
-      if retry_num <= 5
-        retry
-      else
-        raise
+      begin
+        ActiveRecord::Base.connection_pool.with_connection do
+          call_next(env, message, filters)
+        end
+      rescue ActiveRecord::ConnectionTimeoutError
+        retry_num += 1
+        if retry_num <= 5
+          retry
+        else
+          raise
+        end
       end
     end
   end
@@ -235,14 +237,16 @@ module ElmerFudd
 
     def call(env, message, filters)
       retry_num = 0
-      call_next(env, message, filters)
-    rescue @exception => e
-      if e.message =~ @exception_message_matches && retry_num < @times
-        retry_num += 1
-        Math.log(retry_num, 2)
-        retry
-      else
-        raise
+      begin
+        call_next(env, message, filters)
+      rescue @exception => e
+        if e.message =~ @exception_message_matches && retry_num < @times
+          retry_num += 1
+          Math.log(retry_num, 2)
+          retry
+        else
+          raise
+        end
       end
     end
   end
