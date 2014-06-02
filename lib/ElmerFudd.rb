@@ -75,11 +75,11 @@ module ElmerFudd
     end
 
     def self.handle_event(route, filters: [], handler: nil, &block)
-      handlers << TopicHandler.new(route, handler || block, (@filters + filters).uniq)
+      handlers << TopicHandler.new(route, handler || block, (@filters + filters + [DiscardReturnValueFilter]).uniq)
     end
 
     def self.handle_cast(route, filters: [], handler: nil, &block)
-      handlers << DirectHandler.new(route, handler || block, (@filters + filters).uniq)
+      handlers << DirectHandler.new(route, handler || block, (@filters + filters + [DiscardReturnValueFilter]).uniq)
     end
 
     def self.handle_call(route, filters: [], handler: nil, &block)
@@ -212,6 +212,14 @@ module ElmerFudd
       else
         raise
       end
+    end
+  end
+
+  class DiscardReturnValueFilter
+    extend Filter
+    def self.call(env, message, filters)
+      call_next(env, message, filters)
+      nil
     end
   end
 
