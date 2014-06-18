@@ -92,7 +92,7 @@ RSpec::Matchers.define :have_received_notification_on do |exchange_name, options
     queue = server.instance_eval { @notifications }[exchange_name][routing_key]
     if @payload
       queue = queue.select { |payload| payload == @payload }
-    eeend
+    end
     queue
   end
 
