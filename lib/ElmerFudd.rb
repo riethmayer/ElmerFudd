@@ -59,15 +59,15 @@ module ElmerFudd
   class Worker
     Message = Struct.new(:delivery_info, :properties, :payload, :route)
     Env = Struct.new(:channel, :logger)
-    Route = Struct.new(:exchange_name, :routing_key, :queue_name)
+    Route = Struct.new(:exchange_name, :routing_keys, :queue_name)
 
     def self.handlers
       @handlers ||= []
     end
 
-    def self.Route(queue_name, exchange_and_routing_key = {"" => queue_name})
-      exchange, routing_key = exchange_and_routing_key.first
-      Route.new(exchange, routing_key, queue_name)
+    def self.Route(queue_name, exchange_and_routing_keys = {"" => queue_name})
+      exchange, routing_keys = exchange_and_routing_keys.first
+      Route.new(exchange, routing_keys, queue_name)
     end
 
     def self.default_filters(*filters)
@@ -131,7 +131,11 @@ module ElmerFudd
 
     def queue(env)
       env.channel.queue(@route.queue_name, durable: true).tap do |queue|
-        queue.bind(exchange(env), routing_key: @route.routing_key) unless @route.exchange_name == ""
+        unless @route.exchange_name == ""
+          Array(@route.routing_keys).each do |routing_key|
+            queue.bind(exchange(env), routing_key: routing_key)
+          end
+        end
       end
     end
 
