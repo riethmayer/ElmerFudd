@@ -243,7 +243,7 @@ module ElmerFudd
     def call(env, message, filters)
       call_next(env, message, filters)
     rescue @exception => e
-      if e.message =~ @exception_message_matches && retry_num < @times
+      if e.message =~ @exception_message_matches
         @producer.cast @error_queue, message.payload
       else
         raise
