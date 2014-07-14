@@ -1,4 +1,5 @@
 require "ElmerFudd/version"
+require "bunny"
 
 module ElmerFudd
   class Publisher
