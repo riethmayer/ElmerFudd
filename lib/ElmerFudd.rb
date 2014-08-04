@@ -52,7 +52,7 @@ module ElmerFudd
     end
 
     def call(queue_name, payload, **kwargs)
-      JSON.parse(super(queue_name, payload.to_json, **kwargs)).fetch("result")
+      JSON.parse(super(queue_name, payload.to_json, **kwargs))
     end
   end
 
