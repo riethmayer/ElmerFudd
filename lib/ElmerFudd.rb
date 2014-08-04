@@ -1,4 +1,5 @@
 require "ElmerFudd/version"
+require "bunny"
 
 module ElmerFudd
   class Publisher
@@ -59,15 +60,15 @@ module ElmerFudd
   class Worker
     Message = Struct.new(:delivery_info, :properties, :payload, :route)
     Env = Struct.new(:channel, :logger)
-    Route = Struct.new(:exchange_name, :routing_key, :queue_name)
+    Route = Struct.new(:exchange_name, :routing_keys, :queue_name)
 
     def self.handlers
       @handlers ||= []
     end
 
-    def self.Route(queue_name, exchange_and_routing_key = {"" => queue_name})
-      exchange, routing_key = exchange_and_routing_key.first
-      Route.new(exchange, routing_key, queue_name)
+    def self.Route(queue_name, exchange_and_routing_keys = {"" => queue_name})
+      exchange, routing_keys = exchange_and_routing_keys.first
+      Route.new(exchange, routing_keys, queue_name)
     end
 
     def self.default_filters(*filters)
@@ -131,7 +132,11 @@ module ElmerFudd
 
     def queue(env)
       env.channel.queue(@route.queue_name, durable: true).tap do |queue|
-        queue.bind(exchange(env), routing_key: @route.routing_key) unless @route.exchange_name == ""
+        unless @route.exchange_name == ""
+          Array(@route.routing_keys).each do |routing_key|
+            queue.bind(exchange(env), routing_key: routing_key)
+          end
+        end
       end
     end
 
@@ -146,7 +151,7 @@ module ElmerFudd
 
   class TopicHandler < DirectHandler
     def exchange(env)
-      env.channel.topic(@route.exchange_name)
+      env.channel.topic(@route.exchange_name, durable: false, internal: false, autodelete: false)
     end
   end
 
@@ -172,13 +177,28 @@ module ElmerFudd
   end
 
   class DropFailedFilter
-    extend Filter
+    include Filter
+
     def self.call(env, message, filters)
+      new.call(env, message, filters)
+    end
+
+    def initialize(exception: Exception,
+                   exception_message_matches: /.*/)
+      @exception = exception
+      @exception_message_matches = exception_message_matches
+    end
+
+    def call(env, message, filters)
       call_next(env, message, filters)
-    rescue Exception => e
-      env.logger.info "Ignoring failed payload: #{message.payload}"
-      env.logger.debug "#{e.class}: #{e.message}"
-      e.backtrace.each { |l| env.logger.debug(l) }
+    rescue @exception => e
+      if e.message =~ @exception_message_matches
+        env.logger.info "Ignoring failed payload: #{message.payload}"
+        env.logger.debug "#{e.class}: #{e.message}"
+        e.backtrace.each { |l| env.logger.debug(l) }
+      else
+        raise
+      end
     end
   end
 
@@ -187,12 +207,12 @@ module ElmerFudd
     def self.call(env, message, filters)
       call_next(env, message, filters)
     rescue Exception => e
-      Airbrake.notify(e, parametets: {
+      Airbrake.notify(e, parameters: {
                         payload: message.payload,
                         queue: message.route.queue_name,
                         exchange_name: message.route.exchange_name,
                         routing_key: message.delivery_info.routing_key,
-                        matched_routing_key: message.route.routing_key
+                        matched_routing_key: message.route.routing_keys
                       })
       raise
     end
@@ -223,6 +243,27 @@ module ElmerFudd
     def self.call(env, message, filters)
       call_next(env, message, filters)
       nil
+    end
+  end
+
+  class RedirectFailedFilter
+    include Filter
+    def initialize(producer, error_queue, exception: Exception,
+                   exception_message_matches: /.*/)
+      @producer = producer
+      @error_queue = error_queue
+      @exception = exception
+      @exception_message_matches = exception_message_matches
+    end
+
+    def call(env, message, filters)
+      call_next(env, message, filters)
+    rescue @exception => e
+      if e.message =~ @exception_message_matches
+        @producer.cast @error_queue, message.payload
+      else
+        raise
+      end
     end
   end
 

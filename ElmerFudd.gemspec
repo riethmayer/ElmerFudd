@@ -6,8 +6,8 @@ require 'ElmerFudd/version'
 Gem::Specification.new do |spec|
   spec.name          = "ElmerFudd"
   spec.version       = ElmerFudd::VERSION
-  spec.authors       = ["Andrzej Sliwa"]
-  spec.email         = ["andrzej.sliwa@i-tool.eu"]
+  spec.authors       = ["Andrzej Sliwa", "Artur Roszczyk"]
+  spec.email         = ["andrzej.sliwa@i-tool.eu", "artur.roszczyk@gmail.com"]
   spec.summary       = %q{RabbitMQ in OTP way}
   spec.description   = %q{Be vewwy, vewwy quiet...I'm hunting wabbits!}
   spec.homepage      = "https://github.com/bonusboxme/ElmerFudd"
