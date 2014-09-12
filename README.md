@@ -44,7 +44,7 @@ class TestWorker < ElmerFudd::Worker
   default_filters(ElmerFudd::JsonFilter)
 
   handle_cast(Route('test.print')) do |env, message|
-    puts "message: #{message.payload["text"]"
+    puts %{message: #{message.payload["text"]}
   end
 
   handle_call(Route('test.ping')) do |env, message|
