@@ -48,11 +48,11 @@ class TestWorker < ElmerFudd::Worker
   end
 
   handle_call(Route('test.ping')) do |env, message|
-    "pong: #{message.payload["text"]"
+    %{pong: #{message.payload["text"]}
   end
 
   handle_call(Route('test.ping')) do |env, message|
-    "pong: #{message.payload["text"]"
+    %{pong: #{message.payload["text"]}
   end
 
   handle_event(Route('test.log', 'a_topic_exchange' => 'test.#'),
