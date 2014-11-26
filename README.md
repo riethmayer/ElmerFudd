@@ -85,7 +85,7 @@ $rabbit.notify('a_topic_exchange', 'test.log.some.event', count: 1) # will print
 Filters allow to mutate an incoming message in consumer before it hits appropiate handler or to modify return value (or handle errors) after the handler finishes its job. You can define default filters which will be applied to all handlers in consumer or activate them on handler level by passing filters list as a param, i.e.:
 
 ```ruby
-handle_cast(Route('math.divide')
+handle_cast(Route('math.divide'),
             filter: [DropFailedFilter.new(exception: ZeroDivisionError)]) do |env, message|
     puts "#{payload['a'] / payload['b']}"
 end
