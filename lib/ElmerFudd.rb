@@ -95,7 +95,7 @@ module ElmerFudd
 
     def start
       self.class.handlers.each do |handler|
-        handler.queue(@env).subscribe(ack: true, block: false) do |delivery_info, properties, payload|
+        handler.queue(@env).subscribe(manual_ack: true, block: false) do |delivery_info, properties, payload|
           message = Message.new(delivery_info, properties, payload, handler.route)
           begin
             handler.call(@env, message)
