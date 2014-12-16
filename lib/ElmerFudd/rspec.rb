@@ -56,7 +56,7 @@ RSpec::Matchers.define :have_received_cast_on do |queue_name|
     queue
   end
 
-  failure_message_for_should do |rabbit|
+  failure_message do |rabbit|
     if @count
       "expected a message on '#{queue_name}' #{@count} times, but received #{queue(rabbit).size} times"
     else
@@ -64,7 +64,7 @@ RSpec::Matchers.define :have_received_cast_on do |queue_name|
     end
   end
 
-  failure_message_for_should_not do |rabbit|
+  failure_message_when_negated do |rabbit|
     "expected no message on '#{queue_name}', but receved at least one"
   end
 
@@ -96,7 +96,7 @@ RSpec::Matchers.define :have_received_notification_on do |exchange_name, options
     queue
   end
 
-  failure_message_for_should do |rabbit|
+  failure_message do |rabbit|
     if @count
       "expected a message on '#{exchange_name}' with routing key '#{routing_key}' #{@count} times, but received #{queue(rabbit).size} times"
     else
@@ -104,7 +104,7 @@ RSpec::Matchers.define :have_received_notification_on do |exchange_name, options
     end
   end
 
-  failure_message_for_should_not do |rabbit|
+  failure_message_when_negated do |rabbit|
     "expected no message on '#{queue_name}', but receved at least one"
   end
 
