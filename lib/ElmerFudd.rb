@@ -5,15 +5,12 @@ module ElmerFudd
   class Publisher
     def initialize(connection, uuid_service: -> { rand.to_s })
       @connection = connection
-      @channel = @connection.create_channel
-      @x = @channel.default_exchange
-      @rpc_reply_queue = @channel.queue("", exclusive: true)
       @uuid_service = uuid_service
       @topic_x = {}
     end
 
     def notify(topic_exchange, routing_key, payload)
-      @topic_x[topic_exchange] ||= @channel.topic(topic_exchange)
+      @topic_x[topic_exchange] ||= channel.topic(topic_exchange)
       @topic_x[topic_exchange].publish payload.to_s, routing_key: routing_key
       nil
     end
@@ -24,13 +21,14 @@ module ElmerFudd
     end
 
     def call(queue_name, payload, timeout: 10)
-      @x.publish(payload.to_s, routing_key: queue_name, reply_to: @rpc_reply_queue.name,
-                 correlation_id: correlation_id = @uuid_service.call)
+      x.publish(payload.to_s, routing_key: queue_name, reply_to: rpc_reply_queue.name,
+                correlation_id: correlation_id = @uuid_service.call)
       response = nil
       consumer_tag = @uuid_service.call
+      puts rpc_reply_queue.name
       Timeout.timeout(timeout) do
-        @rpc_reply_queue.subscribe(block: true, consumer_tag: consumer_tag) do |delivery_info, properties, payload|
-          if properties[:correlation_id] == correlation_id
+        rpc_reply_queue.subscribe(manual_ack: false, block: true, consumer_tag: consumer_tag) do |delivery_info, properties, payload|
+          if p(properties[:correlation_id]) == correlation_id
             response = payload
             delivery_info.consumer.cancel
           end
@@ -38,8 +36,32 @@ module ElmerFudd
       end
       response
     rescue Timeout::Error
-      @channel.consumers[consumer_tag].cancel
+      reply_channel.consumers[consumer_tag].cancel
       raise
+    end
+
+    private
+
+    def connection
+      @connection.tap do |c|
+        c.start unless c.connected?
+      end
+    end
+
+    def x
+      @x ||= channel.default_exchange
+    end
+
+    def channel
+      @channel ||= connection.create_channel
+    end
+
+    def reply_channel
+      @reply_channel ||= connection.create_channel
+    end
+
+    def rpc_reply_queue
+      @rpc_reply_queue ||= reply_channel.queue("", exclusive: true)
     end
   end
 
@@ -94,6 +116,7 @@ module ElmerFudd
     end
 
     def start
+      @connection.start unless @connection.connected?
       self.class.handlers.each do |handler|
         handler.queue(@env).subscribe(manual_ack: true, block: false) do |delivery_info, properties, payload|
           message = Message.new(delivery_info, properties, payload, handler.route)
