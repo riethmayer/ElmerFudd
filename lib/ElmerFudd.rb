@@ -59,7 +59,7 @@ module ElmerFudd
 
   class Worker
     Message = Struct.new(:delivery_info, :properties, :payload, :route)
-    Env = Struct.new(:channel, :logger)
+    Env = Struct.new(:channel, :logger, :worker_class)
     Route = Struct.new(:exchange_name, :routing_keys, :queue_name)
 
     def self.handlers
@@ -90,7 +90,7 @@ module ElmerFudd
     def initialize(connection, concurrency: 1, logger: Logger.new($stdout))
       @connection = connection
       channel = connection.create_channel.tap { |c| c.prefetch(concurrency) }
-      @env = Env.new(channel, logger)
+      @env = Env.new(channel, logger, self.class)
     end
 
     def start
