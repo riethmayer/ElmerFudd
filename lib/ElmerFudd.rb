@@ -16,7 +16,7 @@ module ElmerFudd
     end
 
     def cast(queue_name, payload)
-      @x.publish(payload.to_s, routing_key: queue_name)
+      x.publish(payload.to_s, routing_key: queue_name)
       nil
     end
 
