@@ -111,24 +111,37 @@ module ElmerFudd
 
     def initialize(connection, concurrency: 1, logger: Logger.new($stdout))
       @connection = connection
-      channel = connection.create_channel.tap { |c| c.prefetch(concurrency) }
-      @env = Env.new(channel, logger, self.class)
+      @concurrency = concurrency
+      @logger = logger
     end
 
     def start
-      @connection.start unless @connection.connected?
       self.class.handlers.each do |handler|
-        handler.queue(@env).subscribe(manual_ack: true, block: false) do |delivery_info, properties, payload|
+        handler.queue(env).subscribe(manual_ack: true, block: false) do |delivery_info, properties, payload|
           message = Message.new(delivery_info, properties, payload, handler.route)
           begin
-            handler.call(@env, message)
-            @env.channel.acknowledge(message.delivery_info.delivery_tag)
+            handler.call(env, message)
+            env.channel.acknowledge(message.delivery_info.delivery_tag)
           rescue Exception => e
-            @env.logger.fatal("Worker blocked: %s, %s:" % [e.class, e.message])
-            e.backtrace.each { |l| @env.logger.fatal(l) }
+            env.logger.fatal("Worker blocked: %s, %s:" % [e.class, e.message])
+            e.backtrace.each { |l| env.logger.fatal(l) }
           end
         end
       end
+    end
+
+    private
+
+    def env
+      @env ||= Env.new(channel, @logger, self.class)
+    end
+
+    def connection
+      @connection.tap { |c| c.start unless c.connected? }
+    end
+
+    def channel
+      @channel ||= connection.create_channel.tap { |c| c.prefetch(@concurrency) }
     end
   end
 
