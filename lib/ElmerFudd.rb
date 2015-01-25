@@ -25,10 +25,9 @@ module ElmerFudd
                 correlation_id: correlation_id = @uuid_service.call)
       response = nil
       consumer_tag = @uuid_service.call
-      puts rpc_reply_queue.name
       Timeout.timeout(timeout) do
         rpc_reply_queue.subscribe(manual_ack: false, block: true, consumer_tag: consumer_tag) do |delivery_info, properties, payload|
-          if p(properties[:correlation_id]) == correlation_id
+          if properties[:correlation_id] == correlation_id
             response = payload
             delivery_info.consumer.cancel
           end
