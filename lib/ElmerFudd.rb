@@ -166,7 +166,7 @@ module ElmerFudd
     end
 
     def queue(env)
-      env.channel.queue(@route.queue_name, durable: true).tap do |queue|
+      env.channel.queue(@route.queue_name, durable: true, exclusive: is_exclusive_queue).tap do |queue|
         unless @route.exchange_name == ""
           Array(@route.routing_keys).each do |routing_key|
             queue.bind(exchange(env), routing_key: routing_key)
@@ -181,6 +181,12 @@ module ElmerFudd
 
     def call(env, message)
       call_next(env, message, @filters + [@callback])
+    end
+
+    private
+
+    def is_exclusive_queue
+      @route.queue_name == ''
     end
   end
 
