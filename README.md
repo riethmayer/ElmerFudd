@@ -80,6 +80,16 @@ $rabbit.call('test.ping', text: 'echo') #=> "pong: echo"
 $rabbit.notify('a_topic_exchange', 'test.log.some.event', count: 1) # will print "[current time here] received on test.log.some.event payload: {count: 1}"
 ```
 
+### Queue naming
+
+You can have multiple consumers listening for particular event message if you omit specifying concrete name for `handle_event` method.
+Just pass an empty string as queque name:
+
+```ruby
+handle_event(Route('', 'a_topic_exchange' => 'test.some.event'),
+               handler: TestLogger.new($stdout))
+```
+
 ### Filters
 
 Filters allow to mutate an incoming message in consumer before it hits appropiate handler or to modify return value (or handle errors) after the handler finishes its job. You can define default filters which will be applied to all handlers in consumer or activate them on handler level by passing filters list as a param, i.e.:
