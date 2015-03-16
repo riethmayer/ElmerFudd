@@ -82,8 +82,7 @@ $rabbit.notify('a_topic_exchange', 'test.log.some.event', count: 1) # will print
 
 ### Queue naming
 
-You can have multiple consumers listening for particular event message if you omit specifying concrete name for `handle_event` method.
-Just pass an empty string as queque name:
+If you want to consume an event in all listening processes (instead of just first available one), pass an empty string as queue name:
 
 ```ruby
 handle_event(Route('', 'a_topic_exchange' => 'test.some.event'),
