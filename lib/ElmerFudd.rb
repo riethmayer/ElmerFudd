@@ -1,5 +1,6 @@
 require "ElmerFudd/version"
 require "bunny"
+require "thread"
 
 module ElmerFudd
   class Publisher
@@ -21,22 +22,28 @@ module ElmerFudd
     end
 
     def call(queue_name, payload, timeout: 10)
-      x.publish(payload.to_s, routing_key: queue_name, reply_to: rpc_reply_queue.name,
-                correlation_id: correlation_id = @uuid_service.call)
-      response = nil
+      mutex = Mutex.new
+      resource = ConditionVariable.new
+      correlation_id = @uuid_service.call
       consumer_tag = @uuid_service.call
+      response = nil
+
       Timeout.timeout(timeout) do
-        rpc_reply_queue.subscribe(manual_ack: false, block: true, consumer_tag: consumer_tag) do |delivery_info, properties, payload|
+        rpc_reply_queue.subscribe(manual_ack: false, block: false, consumer_tag: consumer_tag) do |delivery_info, properties, payload|
           if properties[:correlation_id] == correlation_id
             response = payload
-            delivery_info.consumer.cancel
+            mutex.synchronize { resource.signal }
           end
         end
       end
+
+      x.publish(payload.to_s, routing_key: queue_name, reply_to: rpc_reply_queue.name,
+                correlation_id: correlation_id)
+
+      mutex.synchronize { resource.wait(mutex) unless response }
       response
-    rescue Timeout::Error
+    ensure
       reply_channel.consumers[consumer_tag].cancel
-      raise
     end
 
     private
