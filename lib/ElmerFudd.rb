@@ -35,13 +35,13 @@ module ElmerFudd
             mutex.synchronize { resource.signal }
           end
         end
+
+        x.publish(payload.to_s, routing_key: queue_name, reply_to: rpc_reply_queue.name,
+                  correlation_id: correlation_id)
+
+        mutex.synchronize { resource.wait(mutex) unless response }
+        response
       end
-
-      x.publish(payload.to_s, routing_key: queue_name, reply_to: rpc_reply_queue.name,
-                correlation_id: correlation_id)
-
-      mutex.synchronize { resource.wait(mutex) unless response }
-      response
     ensure
       reply_channel.consumers[consumer_tag].cancel
     end
