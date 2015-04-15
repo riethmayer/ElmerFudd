@@ -115,6 +115,24 @@ module ElmerFudd
       handlers << RpcHandler.new(route, handler || block, (@filters + filters).uniq)
     end
 
+    # Helper allowing to use any method taking hash as a handler
+    # def example(text:, **_)
+    #  puts text
+    # end
+    # # then in worker
+    # handle_cast(...
+    #             handler: payload_as_kwargs(method(:example)))
+    # Thanks to usage of **_ in arguments list it will accept
+    # any payload contaning 'text' key. Skipping **_ will require
+    # listing all payload keys in argument list
+    def self.payload_as_kwargs(handler, only: nil)
+      lambda do |_env, message|
+        symbolized_payload = message.payload.inject({}){|memo,(k,v)| memo[k.to_sym] = v; memo}
+        symbolized_payload = symbolized_payload.slice(Array(only)) if only
+        handler.call(symbolized_payload)
+      end
+    end
+
     def initialize(connection, concurrency: 1, logger: Logger.new($stdout))
       @connection = connection
       @concurrency = concurrency
