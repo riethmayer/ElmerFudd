@@ -128,7 +128,7 @@ module ElmerFudd
     def self.payload_as_kwargs(handler, only: nil)
       lambda do |_env, message|
         symbolized_payload = message.payload.inject({}){|memo,(k,v)| memo[k.to_sym] = v; memo}
-        symbolized_payload = symbolized_payload.slice(Array(only)) if only
+        symbolized_payload = symbolized_payload.select { |k,v| Array(only).include?(k) } if only
         handler.call(symbolized_payload)
       end
     end
