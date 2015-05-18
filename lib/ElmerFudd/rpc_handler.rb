@@ -1,6 +1,8 @@
 module ElmerFudd
   class RpcHandler < DirectHandler
     def call(env, message)
+      env.logger.debug "ElmerFudd RpcHandler.call queue_name: #{@route.queue_name}, exchange_name: #{@route.exchange_name}, filters: #{@filters.map(&:name)}, message: #{message.payload}"
+
       reply(env, message, super)
     end
 

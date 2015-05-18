@@ -20,14 +20,20 @@ module ElmerFudd
     end
 
     def exchange(env)
+      env.logger.debug "ElmerFudd Handler.exchange queue_name: #{@route.queue_name}, exchange_name: #{@route.exchange_name}, filters: #{filters_names}"
       env.channel.direct(@route.exchange_name)
     end
 
     def call(env, message)
+      env.logger.debug "ElmerFudd DirectHandler.call queue_name: #{@route.queue_name}, exchange_name: #{@route.exchange_name}, filters: #{filters_names}, message: #{message.payload}"
       call_next(env, message, @filters + [@callback])
     end
 
     private
+
+    def filters_names
+      @filters.map { |f| f.respond_to?(:name) ? f.name : f.class.name }
+    end
 
     def is_exclusive_queue
       @route.queue_name == ''
