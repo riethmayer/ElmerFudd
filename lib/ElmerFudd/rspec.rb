@@ -1,6 +1,4 @@
-if defined?(Rspec)
-
-  class ElmerFudd::FakeProducer
+class ElmerFudd::FakeProducer
     def initialize(_connection = :no_connection)
       @casts = Hash.new do |hash, queue_name|
         hash[queue_name] = []
@@ -114,4 +112,3 @@ if defined?(Rspec)
       "receive a message on '#{queue_name}'"
     end
   end
-end

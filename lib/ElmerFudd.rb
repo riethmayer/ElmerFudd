@@ -11,8 +11,9 @@ module ElmerFudd
   require 'ElmerFudd/direct_handler'
   require 'ElmerFudd/topic_handler'
   require 'ElmerFudd/rpc_handler'
-
-  require 'ElmerFudd/rspec'
+  if defined?(Rspec)
+    require 'ElmerFudd/rspec'
+  end
   require 'ElmerFudd/worker'
 
 
