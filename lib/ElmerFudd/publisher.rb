@@ -1,7 +1,6 @@
 module ElmerFudd
   class Publisher
     def initialize(connection, uuid_service: -> { rand.to_s }, logger: Logger.new($stdout))
-      puts "LOGGGER #{logger}"
       @connection = connection
       @logger = logger
       @uuid_service = uuid_service
