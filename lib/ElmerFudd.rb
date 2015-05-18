@@ -7,15 +7,16 @@ module ElmerFudd
   require 'ElmerFudd/publisher'
   require 'ElmerFudd/json_publisher'
 
+  require 'ElmerFudd/filter'
   require 'ElmerFudd/direct_handler'
   require 'ElmerFudd/topic_handler'
   require 'ElmerFudd/rpc_handler'
-
-  require 'ElmerFudd/rspec'
-
+  if defined?(Rspec)
+    require 'ElmerFudd/rspec'
+  end
   require 'ElmerFudd/worker'
 
-  require 'ElmerFudd/filter'
+
   require 'ElmerFudd/active_record_connection_pool_filter'
   require 'ElmerFudd/airbrake_filter'
   require 'ElmerFudd/discard_return_value_filter'
