@@ -18,6 +18,7 @@ module ElmerFudd
             queue.bind(exchange(env), routing_key: routing_key)
           end
         end
+        @route.queue_name = queue.name
       end
     end
 
