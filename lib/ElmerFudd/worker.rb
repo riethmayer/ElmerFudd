@@ -4,6 +4,11 @@ module ElmerFudd
     Env = Struct.new(:channel, :logger, :worker_class)
     Route = Struct.new(:exchange_name, :routing_keys, :queue_name)
 
+    class << self
+      attr_writer :durable_queues
+      def durable_queues; @durable_queues.nil? ? true : @durable_queues; end
+    end
+
     def self.handlers
       @handlers ||= []
     end
@@ -18,15 +23,18 @@ module ElmerFudd
     end
 
     def self.handle_event(route, filters: [], handler: nil, &block)
-      handlers << TopicHandler.new(route, handler || block, (@filters + filters + [DiscardReturnValueFilter]).uniq)
+      handlers << TopicHandler.new(route, handler || block, (@filters + filters + [DiscardReturnValueFilter]).uniq,
+                                   durable: durable_queues)
     end
 
     def self.handle_cast(route, filters: [], handler: nil, &block)
-      handlers << DirectHandler.new(route, handler || block, (@filters + filters + [DiscardReturnValueFilter]).uniq)
+      handlers << DirectHandler.new(route, handler || block, (@filters + filters + [DiscardReturnValueFilter]).uniq,
+                                    durable: durable_queues)
     end
 
     def self.handle_call(route, filters: [], handler: nil, &block)
-      handlers << RpcHandler.new(route, handler || block, (@filters + filters).uniq)
+      handlers << RpcHandler.new(route, handler || block, (@filters + filters).uniq,
+                                 durable: false)
     end
 
     # Helper allowing to use any method taking hash as a handler
@@ -55,20 +63,32 @@ module ElmerFudd
 
     def start
       self.class.handlers.each do |handler|
-        handler.queue(env).subscribe(manual_ack: true, block: false) do |delivery_info, properties, payload|
-          message = Message.new(delivery_info, properties, payload, handler.route)
-          begin
-            handler.call(env, message)
-            env.channel.acknowledge(message.delivery_info.delivery_tag)
-          rescue Exception => e
-            env.logger.fatal("Worker blocked: %s, %s:" % [e.class, e.message])
-            e.backtrace.each { |l| env.logger.fatal(l) }
-          end
-        end
+        subscribe_handler(handler)
       end
     end
 
     private
+
+    def subscribe_handler(handler)
+      handler.queue(env).subscribe(manual_ack: true, block: false,
+                                   on_cancellation: ->(*) { on_consumer_cancellation(handler) }
+                                  ) do |delivery_info, properties, payload|
+        message = Message.new(delivery_info, properties, payload, handler.route)
+        begin
+          handler.call(env, message)
+          env.channel.acknowledge(message.delivery_info.delivery_tag)
+        rescue Exception => e
+          env.logger.fatal("Worker blocked: %s, %s:" % [e.class, e.message])
+          e.backtrace.each { |l| env.logger.fatal(l) }
+        end
+      end
+    end
+
+    def on_consumer_cancellation(handler)
+      unless self.class.durable_queues
+        handler.ensure_that_queue_exists(env)
+      end
+    end
 
     def env
       @env ||= Env.new(channel, @logger, self.class)
@@ -79,7 +99,11 @@ module ElmerFudd
     end
 
     def channel
-      @channel ||= connection.create_channel.tap { |c| c.prefetch(@concurrency) }
+      @channel ||= connection.create_channel
+      @channel.recover_cancelled_consumers!
+      @channel.tap do |c|
+        c.prefetch(@concurrency)
+      end
     end
   end
 end

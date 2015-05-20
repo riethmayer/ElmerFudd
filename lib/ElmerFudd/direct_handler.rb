@@ -3,20 +3,27 @@ module ElmerFudd
     include Filter
     attr_reader :route
 
-    def initialize(route, callback, filters)
+    def initialize(route, callback, filters, durable:)
       @route = route
       @callback = callback
       @filters = filters
+      @durable = durable
     end
 
     def queue(env)
-      env.channel.queue(@route.queue_name, durable: true, exclusive: is_exclusive_queue).tap do |queue|
+      ensure_that_queue_exists(env)
+      env.channel.queue(@route.queue_name, durable: @durable, exclusive: is_exclusive_queue).tap do |queue|
         unless @route.exchange_name == ""
           Array(@route.routing_keys).each do |routing_key|
             queue.bind(exchange(env), routing_key: routing_key)
           end
         end
+        @route.queue_name = queue.name
       end
+    end
+
+    def ensure_that_queue_exists(env)
+      env.channel.queue_declare(@route.queue_name, durable: @durable, exclusive: is_exclusive_queue)
     end
 
     def exchange(env)
