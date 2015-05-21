@@ -3,11 +3,11 @@ module ElmerFudd
     include Filter
     attr_reader :route
 
-    def initialize(route, callback, filters, durable:)
+    def initialize(route, callback, filters, options)
       @route = route
       @callback = callback
       @filters = filters
-      @durable = durable
+      @durable = options.fetch(:durable)
     end
 
     def queue(env)
