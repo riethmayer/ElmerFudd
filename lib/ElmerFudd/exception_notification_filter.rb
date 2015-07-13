@@ -4,7 +4,7 @@ module ElmerFudd
     def self.call(env, message, filters)
       call_next(env, message, filters)
     rescue Exception => e
-      ExceptionNotifier.notify_exception(e, env: Rails.env, data: {
+      ExceptionNotifier.notify_exception(e, data: {
                         payload: message.payload,
                         queue: message.route.queue_name,
                         exchange_name: message.route.exchange_name,
