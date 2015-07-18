@@ -35,6 +35,6 @@ end
 
 def assert_always(timeout = 0.5, &condition)
   Timeout.timeout(timeout) do
-    loop { assert condition.call }
+    loop { assert condition.call; sleep timeout / 10 }
   end rescue Timeout::Error
 end
