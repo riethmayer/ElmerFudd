@@ -1,0 +1,4 @@
+machine:
+  ruby: 2.2.0
+  services:
+    - rabbitmq-server
