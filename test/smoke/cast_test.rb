@@ -66,16 +66,29 @@ class CastTest < MiniTest::Unit::TestCase
     @worker = TestWorker.new(@worker_connection, concurrency: 2,
                              logger: NullLoger.new).
               tap(&:start)
-    @publisher.cast TEST_QUEUE, message: "hello", delay: 1
-    @publisher.cast TEST_QUEUE, message: "hello2", delay: 1
+    @publisher.cast TEST_QUEUE, message: "hello", delay: 0.5
+    @publisher.cast TEST_QUEUE, message: "hello2", delay: 0.5
 
     result = []
-    Timeout.timeout(2) do
+    Timeout.timeout(1) do
       2.times { result << $responses.pop }
     end rescue Timeout::Error fail "jobs did not execute in parallel"
 
     assert_equal %w(hello hello2), result.sort
   end
 
+  def test_multiple_workers_on_same_connection_work_in_parallel
+    @worker = TestWorker.new(@worker_connection, logger: NullLoger.new).tap(&:start)
+    TestWorker.new(@worker_connection, logger: NullLoger.new).tap(&:start)
 
+    @publisher.cast TEST_QUEUE, message: "hello", delay: 0.5
+    @publisher.cast TEST_QUEUE, message: "hello2", delay: 0.5
+
+    result = []
+    Timeout.timeout(1) do
+      2.times { result << $responses.pop }
+    end rescue Timeout::Error fail "jobs did not execute in parallel"
+
+    assert_equal %w(hello hello2), result.sort
+  end
 end
