@@ -8,6 +8,10 @@ class CastTest < MiniTest::Unit::TestCase
 
     handle_cast(Route(TEST_QUEUE)) do |_env, message|
       raise "unexpected error" if message.payload["raise"]
+      if delay = message.payload["delay"]
+        sleep delay
+      end
+
       $responses << message.payload["message"]
     end
   end
@@ -56,5 +60,22 @@ class CastTest < MiniTest::Unit::TestCase
       assert "hello2", $responses.pop
     end
   end
+
+  # TODO: make it work!
+  def test_work_in_parallel_if_concurrency_greater_than_1
+    @worker = TestWorker.new(@worker_connection, concurrency: 2,
+                             logger: NullLoger.new).
+              tap(&:start)
+    @publisher.cast TEST_QUEUE, message: "hello", delay: 1
+    @publisher.cast TEST_QUEUE, message: "hello2", delay: 1
+
+    result = []
+    Timeout.timeout(2) do
+      2.times { result << $responses.pop }
+    end rescue Timeout::Error fail "jobs did not execute in parallel"
+
+    assert_equal %w(hello hello2), result.sort
+  end
+
 
 end
