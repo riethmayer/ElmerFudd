@@ -1,6 +1,7 @@
 require 'test_helper'
 
 class EventTest < MiniTest::Test
+  include RabbitHelper
   TEST_QUEUE_1 = "test.ElmerFudd.event.all"
   TEST_QUEUE_2 = "test.ElmerFudd.event.high_prio"
 
@@ -17,22 +18,16 @@ class EventTest < MiniTest::Test
   end
 
   def setup
-    @publisher_connection = get_new_connection
-    @publisher = ElmerFudd::JsonPublisher.new(@publisher_connection, logger: NullLoger.new)
-    @worker_connection = get_new_connection
-
-    $responses = Queue.new
+    super
     $high_prio_responses = Queue.new
-    TestWorker.new(@worker_connection, logger: NullLoger.new).tap(&:start)
+    start_worker TestWorker
   end
 
   def teardown
-    channel = @publisher_connection.channel
-    channel.topic("x_topic").delete
-    @publisher_connection.stop
-    @worker_connection.stop
+    get_new_connection.channel.topic("x_topic").delete
     remove_queue TEST_QUEUE_1
     remove_queue TEST_QUEUE_2
+    super
   end
 
   def test_notify_matches_event_name

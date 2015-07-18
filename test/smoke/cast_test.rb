@@ -1,6 +1,7 @@
 require 'test_helper'
 
 class CastTest < MiniTest::Test
+  include RabbitHelper
   TEST_QUEUE = "test.ElmerFudd.cast"
 
   class TestWorker < ElmerFudd::Worker
@@ -16,22 +17,13 @@ class CastTest < MiniTest::Test
     end
   end
 
-  def setup
-    @publisher_connection = get_new_connection
-    @publisher = ElmerFudd::JsonPublisher.new(@publisher_connection, logger: NullLoger.new)
-    @worker_connection = get_new_connection
-    $responses = Queue.new
-  end
-
   def teardown
-    @publisher_connection.stop
-    @worker_connection.stop
     remove_queue TEST_QUEUE
+    super
   end
 
   def test_basic_cast
-    @worker = TestWorker.new(@worker_connection, logger: NullLoger.new).
-              tap(&:start)
+    start_worker TestWorker
     @publisher.cast TEST_QUEUE, message: "hello"
 
     Timeout.timeout(0.5) do
@@ -40,8 +32,7 @@ class CastTest < MiniTest::Test
   end
 
   def test_basic_cast_blocks_worker_if_unexpected_exception_occurs
-    @worker = TestWorker.new(@worker_connection, logger: NullLoger.new).
-              tap(&:start)
+    start_worker TestWorker
     @publisher.cast TEST_QUEUE, message: "hello", raise: true
     @publisher.cast TEST_QUEUE, message: "hello"
 
@@ -49,9 +40,7 @@ class CastTest < MiniTest::Test
   end
 
   def test_workers_continues_if_concurency_greater_than_1
-    @worker = TestWorker.new(@worker_connection, concurrency: 2,
-                             logger: NullLoger.new).
-              tap(&:start)
+    start_worker TestWorker, concurrency: 2
     @publisher.cast TEST_QUEUE, message: "hello", raise: true
     @publisher.cast TEST_QUEUE, message: "hello2"
 
@@ -62,9 +51,7 @@ class CastTest < MiniTest::Test
 
   def test_work_in_parallel_if_concurrency_greater_than_1
     skip "TODO: investigate why it fails"
-    @worker = TestWorker.new(@worker_connection, concurrency: 2,
-                             logger: NullLoger.new).
-              tap(&:start)
+    start_worker TestWorker, concurrency: 2
     @publisher.cast TEST_QUEUE, message: "hello", delay: 0.5
     @publisher.cast TEST_QUEUE, message: "hello2", delay: 0.5
 
@@ -77,8 +64,8 @@ class CastTest < MiniTest::Test
   end
 
   def test_multiple_workers_on_same_connection_work_in_parallel
-    @worker = TestWorker.new(@worker_connection, logger: NullLoger.new).tap(&:start)
-    TestWorker.new(@worker_connection, logger: NullLoger.new).tap(&:start)
+    start_worker TestWorker, connection: (conn = get_new_connection)
+    start_worker TestWorker, connection: conn
 
     @publisher.cast TEST_QUEUE, message: "hello", delay: 0.5
     @publisher.cast TEST_QUEUE, message: "hello2", delay: 0.5

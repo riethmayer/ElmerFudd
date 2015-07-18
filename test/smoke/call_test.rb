@@ -1,6 +1,7 @@
 require 'test_helper'
 
 class CallTest < MiniTest::Test
+  include RabbitHelper
   TEST_QUEUE = "test.ElmerFudd.call"
 
   class TestWorker < ElmerFudd::Worker
@@ -17,16 +18,13 @@ class CallTest < MiniTest::Test
   end
 
   def setup
-    @publisher_connection = get_new_connection
-    @publisher = ElmerFudd::JsonPublisher.new(@publisher_connection, logger: NullLoger.new)
-    @worker_connection = get_new_connection
-    TestWorker.new(@worker_connection, logger: NullLoger.new).tap(&:start)
+    super
+    start_worker TestWorker
   end
 
   def teardown
-    @publisher_connection.stop
-    @worker_connection.stop
     remove_queue TEST_QUEUE
+    super
   end
 
   def test_call_returns_the_value_from_worker

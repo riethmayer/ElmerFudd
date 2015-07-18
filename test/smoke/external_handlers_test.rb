@@ -1,6 +1,7 @@
 require 'test_helper'
 
 class ExternalHandlersTest < MiniTest::Test
+  include RabbitHelper
   TEST_QUEUE = "test.ElmerFudd.cast"
 
   module Handler
@@ -25,21 +26,13 @@ class ExternalHandlersTest < MiniTest::Test
                 handler: payload_as_kwargs(Handler.method(:run)))
   end
 
-  def setup
-    @publisher_connection = get_new_connection
-    @publisher = ElmerFudd::JsonPublisher.new(@publisher_connection, logger: NullLoger.new)
-    @worker_connection = get_new_connection
-    $responses = Queue.new
-  end
-
   def teardown
-    @publisher_connection.stop
-    @worker_connection.stop
     remove_queue TEST_QUEUE
+    super
   end
 
   def test_external_handler
-    TestWorker1.new(@worker_connection, logger: NullLoger.new).tap(&:start)
+    start_worker TestWorker1
     @publisher.cast TEST_QUEUE, text: "hello"
 
     Timeout.timeout(0.5) do
@@ -48,7 +41,7 @@ class ExternalHandlersTest < MiniTest::Test
   end
 
   def test_payload_as_kwargs
-    TestWorker2.new(@worker_connection, logger: NullLoger.new).tap(&:start)
+    start_worker TestWorker2
     @publisher.cast TEST_QUEUE, text: "hello", ignored_param: true
 
     Timeout.timeout(0.5) do
