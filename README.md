@@ -1,4 +1,5 @@
 # Be vewwy, vewwy quiet...I'm hunting wabbits! [![Build Status](https://travis-ci.org/bonusboxme/ElmerFudd.svg)](https://travis-ci.org/bonusboxme/ElmerFudd)
+[![Build status](https://circleci.com/gh/sevos/ElmerFudd.svg?style=shield&circle-token=:circle-token)
 
 ![Elmer Fudd](https://raw.githubusercontent.com/bonusboxme/ElmerFudd/master/elmer-fudd.jpg)
 
