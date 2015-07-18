@@ -20,21 +20,21 @@ class CallTest < MiniTest::Test
     @publisher_connection = get_new_connection
     @publisher = ElmerFudd::JsonPublisher.new(@publisher_connection, logger: NullLoger.new)
     @worker_connection = get_new_connection
+    TestWorker.new(@worker_connection, logger: NullLoger.new).tap(&:start)
   end
 
   def teardown
     @publisher_connection.stop
+    @worker_connection.stop
     remove_queue TEST_QUEUE
   end
 
   def test_call_returns_the_value_from_worker
-    TestWorker.new(@worker_connection, logger: NullLoger.new).tap(&:start)
     assert_equal({"result" => "hello"},
                  @publisher.call(TEST_QUEUE, message: "hello"))
   end
 
   def test_call_timeouts_if_worker_time_outs
-    TestWorker.new(@worker_connection, logger: NullLoger.new).tap(&:start)
     response = nil
     assert_raises Timeout::Error do
       # The default timeout is different and greater than 0
@@ -45,7 +45,6 @@ class CallTest < MiniTest::Test
   end
 
   def test_call_timeouts_if_worker_crashes
-    TestWorker.new(@worker_connection, logger: NullLoger.new).tap(&:start)
     response = nil
     assert_raises Timeout::Error do
       # The default timeout is different and greater than 0

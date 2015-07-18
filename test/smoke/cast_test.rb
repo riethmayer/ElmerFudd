@@ -25,6 +25,7 @@ class CastTest < MiniTest::Test
 
   def teardown
     @publisher_connection.stop
+    @worker_connection.stop
     remove_queue TEST_QUEUE
   end
 

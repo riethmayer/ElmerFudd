@@ -32,3 +32,9 @@ rescue Bunny::PreconditionFailed
 ensure
   conn.close
 end
+
+def assert_always(timeout = 0.5, &condition)
+  Timeout.timeout(timeout) do
+    loop { assert condition.call }
+  end rescue Timeout::Error
+end
