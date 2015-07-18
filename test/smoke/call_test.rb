@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class CallTest < MiniTest::Unit::TestCase
+class CallTest < MiniTest::Test
   TEST_QUEUE = "test.ElmerFudd.call"
 
   class TestWorker < ElmerFudd::Worker

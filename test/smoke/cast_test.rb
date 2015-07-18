@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class CastTest < MiniTest::Unit::TestCase
+class CastTest < MiniTest::Test
   TEST_QUEUE = "test.ElmerFudd.cast"
 
   class TestWorker < ElmerFudd::Worker
@@ -44,9 +44,7 @@ class CastTest < MiniTest::Unit::TestCase
     @publisher.cast TEST_QUEUE, message: "hello", raise: true
     @publisher.cast TEST_QUEUE, message: "hello"
 
-    Timeout.timeout(0.5) do
-      loop { assert $responses.empty? }
-    end rescue Timeout::Error
+    assert_always { $responses.empty? }
   end
 
   def test_workers_continues_if_concurency_greater_than_1
