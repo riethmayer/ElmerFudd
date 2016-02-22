@@ -20,6 +20,7 @@ module RabbitHelper
   end
 
   def teardown
+    sleep 0.1
     rabbit_close_connections
     super
   end
@@ -59,6 +60,6 @@ end
 
 def assert_always(timeout = 0.5, &condition)
   Timeout.timeout(timeout) do
-    loop { assert condition.call; sleep timeout / 10 }
+    loop { assert condition.call; sleep timeout / 10.0 }
   end rescue Timeout::Error
 end
