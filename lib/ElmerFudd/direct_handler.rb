@@ -32,7 +32,7 @@ module ElmerFudd
     end
 
     def call(env, message)
-      env.logger.debug "ElmerFudd DirectHandler.call queue_name: #{@route.queue_name}, exchange_name: #{@route.exchange_name}, filters: #{filters_names}, message: #{message.payload}"
+      env.logger.debug "ElmerFudd #{self.class.name}.call (#{object_id}) queue_name: #{@route.queue_name}, exchange_name: #{@route.exchange_name}, filters: #{filters_names}, message: #{message.payload}"
       call_next(env, message, @filters + [@callback])
     end
 
