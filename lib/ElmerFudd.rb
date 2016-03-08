@@ -25,4 +25,5 @@ module ElmerFudd
   require 'ElmerFudd/json_filter'
   require 'ElmerFudd/redirect_failed_filter'
   require 'ElmerFudd/retry_filter'
+  require 'ElmerFudd/benchmark_filter'
 end
