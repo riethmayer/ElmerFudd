@@ -4,6 +4,8 @@ require 'thread'
 require 'json'
 
 module ElmerFudd
+  DEFAULT_CONTENT_TYPE = Bunny::Channel::DEFAULT_CONTENT_TYPE
+
   require 'ElmerFudd/publisher'
   require 'ElmerFudd/json_publisher'
 
