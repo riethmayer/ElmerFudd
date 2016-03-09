@@ -35,7 +35,7 @@ module ElmerFudd
       end
     end
 
-    def notify(topic_exchange, routing_key, payload)
+    def notify(topic_exchange, routing_key, payload, content_type: ElmerFudd::DEFAULT_CONTENT_TYPE)
       @exchange.with do |exchange|
         @logger.debug "ElmerFudd: NOTIFY - topic_exchange: #{topic_exchange}, routing_key: #{routing_key}, payload: #{payload}"
         exchange.topic(topic_exchange).publish payload.to_s, routing_key: routing_key
@@ -43,7 +43,7 @@ module ElmerFudd
       nil
     end
 
-    def cast(queue_name, payload)
+    def cast(queue_name, payload, content_type: ElmerFudd::DEFAULT_CONTENT_TYPE)
       @exchange.with do |exchange|
         @logger.debug "ElmerFudd: CAST - queue_name: #{queue_name}, payload: #{payload}"
         exchange.direct.publish(payload.to_s, routing_key: queue_name)
@@ -51,7 +51,7 @@ module ElmerFudd
       nil
     end
 
-    def call(queue_name, payload, timeout: 10)
+    def call(queue_name, payload, timeout: 10, content_type: ElmerFudd::DEFAULT_CONTENT_TYPE)
       @exchange.with do |exchange|
         begin
           @logger.debug "ElmerFudd: CALL - queue_name: #{queue_name}, payload: #{payload}, timeout: #{timeout}"
@@ -69,7 +69,9 @@ module ElmerFudd
               end
             end
 
-            exchange.direct.publish(payload.to_s, routing_key: queue_name, reply_to: exchange.rpc_reply_queue.name,
+            exchange.direct.publish(payload.to_s,
+                                    content_type: content_type,
+                                    routing_key: queue_name, reply_to: exchange.rpc_reply_queue.name,
                                     correlation_id: correlation_id)
 
             mutex.synchronize { resource.wait(mutex) unless response }

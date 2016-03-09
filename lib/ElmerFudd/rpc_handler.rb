@@ -7,7 +7,9 @@ module ElmerFudd
     end
 
     def reply(env, original_message, response)
-      exchange(env).publish(response.to_s, routing_key: original_message.properties.reply_to,
+      exchange(env).publish(response.to_s,
+                            content_type: call_reply_content_type,
+                            routing_key: original_message.properties.reply_to,
                             correlation_id: original_message.properties.correlation_id)
     end
   end
