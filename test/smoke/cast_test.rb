@@ -27,7 +27,7 @@ class CastTest < MiniTest::Test
     @publisher.cast TEST_QUEUE, message: "hello"
 
     Timeout.timeout(0.5) do
-      assert "hello", $responses.pop
+      assert_equal "hello", $responses.pop
     end
   end
 
@@ -45,7 +45,7 @@ class CastTest < MiniTest::Test
     @publisher.cast TEST_QUEUE, message: "hello2"
 
     Timeout.timeout(0.5) do
-      assert "hello2", $responses.pop
+      assert_equal "hello2", $responses.pop
     end
   end
 

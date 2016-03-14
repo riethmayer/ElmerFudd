@@ -7,6 +7,9 @@ module ElmerFudd
     class << self
       attr_writer :durable_queues
       def durable_queues; @durable_queues.nil? ? true : @durable_queues; end
+
+      attr_writer :single_channel
+      def single_channel; @single_channel.nil? ? true : @single_channel; end
     end
 
     def self.handlers
@@ -91,18 +94,23 @@ module ElmerFudd
     end
 
     def env
-      @env ||= Env.new(channel, @logger, self.class)
+      self.class.single_channel ? @env ||= new_env : new_env
+    end
+
+    def new_env
+      Env.new(new_channel, @logger, self.class)
     end
 
     def connection
       @connection.tap { |c| c.start unless c.connected? }
     end
 
-    def channel
-      @channel ||= connection.create_channel
-      @channel.recover_cancelled_consumers!
-      @channel.tap do |c|
-        c.prefetch(@concurrency)
+    def new_channel
+      connection.create_channel.tap do |channel|
+        channel.recover_cancelled_consumers!
+        channel.tap do |c|
+          c.prefetch(@concurrency)
+        end
       end
     end
   end
