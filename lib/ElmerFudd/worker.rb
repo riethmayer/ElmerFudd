@@ -8,6 +8,7 @@ module ElmerFudd
       attr_writer :durable_queues
       def durable_queues; @durable_queues.nil? ? true : @durable_queues; end
 
+      # When set to true, every handler will receive a separate channel
       attr_writer :single_channel
       def single_channel; @single_channel.nil? ? true : @single_channel; end
     end
