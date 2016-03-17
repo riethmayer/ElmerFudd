@@ -38,7 +38,7 @@ module ElmerFudd
     def notify(topic_exchange, routing_key, payload, content_type: ElmerFudd::DEFAULT_CONTENT_TYPE)
       @exchange.with do |exchange|
         @logger.debug "ElmerFudd: NOTIFY - topic_exchange: #{topic_exchange}, routing_key: #{routing_key}, payload: #{payload}"
-        exchange.topic(topic_exchange).publish payload.to_s, routing_key: routing_key
+        exchange.topic(topic_exchange).publish payload.to_s, routing_key: routing_key, content_type: content_type
       end
       nil
     end
@@ -46,7 +46,7 @@ module ElmerFudd
     def cast(queue_name, payload, content_type: ElmerFudd::DEFAULT_CONTENT_TYPE)
       @exchange.with do |exchange|
         @logger.debug "ElmerFudd: CAST - queue_name: #{queue_name}, payload: #{payload}"
-        exchange.direct.publish(payload.to_s, routing_key: queue_name)
+        exchange.direct.publish(payload.to_s, routing_key: queue_name, content_type: content_type)
       end
       nil
     end
